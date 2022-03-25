@@ -1,0 +1,8 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/Lab06/bin/Debug/net6.0
+/Lab06/obj
+/Lab06/appsettings.Development.json
+/Lab06/appsettings.json
