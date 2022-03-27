@@ -21,49 +21,76 @@ namespace Lab06.Controllers
             _context = context;
         }
 
-        // GET: api/Students
+        // GET: api/Students1
         [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)] // returned when we return list of Students successfully 
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)] // returned when there is an error in processing the request 
         public async Task<ActionResult<IEnumerable<Student>>> GetStudents()
         {
             return await _context.Students.ToListAsync();
         }
 
-        // GET: api/Students/5
+        // GET: api/Students1/5
         [HttpGet("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)] // returned when we return student successfully -- returning the student with requested id
+        [ProducesResponseType(StatusCodes.Status404NotFound)] // returned when there is an error in (error in the code or error from the server side)processing the request i.e. STUDENT NOT FOUND
         public async Task<ActionResult<Student>> GetStudent(Guid id)
         {
             var student = await _context.Students.FindAsync(id);
 
             if (student == null)
             {
-                return NotFound();
+                return NotFound(); //error 404 Not found
             }
 
             return student;
         }
 
-        // PUT: api/Students/5
+        // PUT: api/Students1/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)] //returned when the student is updated successfully
+        [ProducesResponseType(StatusCodes.Status400BadRequest)] //returned when there is an error in the request (id not found)
+        [ProducesResponseType(StatusCodes.Status404NotFound)] //returned when the server is not able to update the student in the database
         public async Task<IActionResult> PutStudent(Guid id, Student student)
         {
-            if (id != student.Id)
+            var student01 = await _context.Students.FindAsync(id);
+            if (student01 == null)
             {
-                //Console.WriteLine("*******************BAD REQUEST***********************");
-                return BadRequest();
+                return BadRequest("Student ID Not Found");
             }
+            if (student01 != null)
+            {
+                student01.FirstName = student.FirstName;
+                student01.LastName = student.LastName;
+                student01.Program = student.Program;
+                _context.SaveChanges();
+            }
+            else
+            {
+                return NotFound("Not found");
+            }
+            return Ok("Student updated Successfully\n" + student);
+        }
 
-            _context.Entry(student).State = EntityState.Modified;
-
+        // POST: api/Students1
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPost]
+        [ProducesResponseType(StatusCodes.Status200OK)] // returned when the POST is executed successfully
+        [ProducesResponseType(StatusCodes.Status409Conflict)] // returned when there is an error in processing the request (id already exists)
+        [ProducesResponseType(StatusCodes.Status201Created)] // returned the request is posted successfully
+        public async Task<ActionResult<Student>> PostStudent(Student student)
+        {
+            _context.Students.Add(student);
             try
             {
                 await _context.SaveChangesAsync();
             }
-            catch (DbUpdateConcurrencyException)
+            catch (DbUpdateException)
             {
-                if (!StudentExists(id))
+                if (StudentExists(student.Id))
                 {
-                    return NotFound();
+                    return Conflict();
                 }
                 else
                 {
@@ -71,22 +98,13 @@ namespace Lab06.Controllers
                 }
             }
 
-            return NoContent();
-        }
-
-        // POST: api/Students
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<Student>> PostStudent(Student student)
-        {
-            _context.Students.Add(student);
-            await _context.SaveChangesAsync();
-
             return CreatedAtAction("GetStudent", new { id = student.Id }, student);
         }
 
-        // DELETE: api/Students/5
+        // DELETE: api/Students1/5
         [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status404NotFound)] //returned when the server is unable to get the id
+        [ProducesResponseType(StatusCodes.Status204NoContent)] //returned when the student is deleted and there is no content to delete
         public async Task<IActionResult> DeleteStudent(Guid id)
         {
             var student = await _context.Students.FindAsync(id);
